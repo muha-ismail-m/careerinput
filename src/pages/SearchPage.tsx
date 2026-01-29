@@ -7,7 +7,7 @@ import { searchJobsAPI } from '@/services/api';
 import { cn } from '@/utils/cn';
 
 export function SearchPage() {
-  const { jobs, setJobs, selectedJobs, toggleJobSelection, selectAllJobs, clearSelection, addToQueue, setCurrentPage, isAuthenticated } = useAppStore();
+  const { jobs, setJobs, selectedJobIds, toggleJobSelection, selectAllJobs, clearSelection, addToQueue, setCurrentPage, isAuthenticated } = useAppStore();
   
   const [filters, setFilters] = useState<SearchFilters>({
     query: '',
@@ -36,7 +36,7 @@ export function SearchPage() {
       setShowAuthPrompt(true);
       return;
     }
-    const selectedJobsList = jobs.filter(job => selectedJobs.has(job.id));
+    const selectedJobsList = jobs.filter(job => selectedJobIds.includes(job.id));
     addToQueue(selectedJobsList);
     setCurrentPage('dashboard');
   };
@@ -93,13 +93,13 @@ export function SearchPage() {
             <p className="text-slate-500 mt-1">Search jobs from LinkedIn, Indeed, Glassdoor, and 50+ sources</p>
           </div>
           
-          {selectedJobs.size > 0 && (
+          {selectedJobIds.length > 0 && (
             <button
               onClick={handleApplySelected}
               className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold rounded-xl shadow-lg shadow-emerald-500/25 transition-all hover:shadow-xl hover:-translate-y-0.5"
             >
               <Zap className="h-5 w-5" />
-              Apply to {selectedJobs.size} Selected
+              Apply to {selectedJobIds.length} Selected
             </button>
           )}
         </div>
@@ -226,10 +226,10 @@ export function SearchPage() {
               {jobs.length > 0 && (
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={selectedJobs.size === jobs.length ? clearSelection : selectAllJobs}
+                    onClick={selectedJobIds.length === jobs.length ? clearSelection : selectAllJobs}
                     className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
                   >
-                    {selectedJobs.size === jobs.length ? 'Deselect all' : 'Select all'}
+                    {selectedJobIds.length === jobs.length ? 'Deselect all' : 'Select all'}
                   </button>
                 </div>
               )}
@@ -241,7 +241,7 @@ export function SearchPage() {
                 <JobCard
                   key={job.id}
                   job={job}
-                  isSelected={selectedJobs.has(job.id)}
+                  isSelected={selectedJobIds.includes(job.id)}
                   onToggle={() => toggleJobSelection(job.id)}
                   formatSalary={formatSalary}
                 />

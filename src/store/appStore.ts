@@ -14,7 +14,7 @@ interface AppState {
   
   // Jobs
   jobs: Job[];
-  selectedJobs: Set<string>;
+  selectedJobIds: string[];
   jobQueue: JobQueue[];
   
   // UI State
@@ -34,6 +34,8 @@ interface AppState {
   toggleJobSelection: (jobId: string) => void;
   selectAllJobs: () => void;
   clearSelection: () => void;
+  isJobSelected: (jobId: string) => boolean;
+  getSelectedCount: () => number;
   
   addToQueue: (jobs: Job[]) => void;
   updateQueueStatus: (queueId: string, status: JobQueue['status'], errorMessage?: string) => void;
@@ -56,7 +58,7 @@ export const useAppStore = create<AppState>()(
       profile: null,
       document: null,
       jobs: [],
-      selectedJobs: new Set(),
+      selectedJobIds: [],
       jobQueue: [],
       currentPage: 'landing',
       isLoading: false,
@@ -138,7 +140,7 @@ export const useAppStore = create<AppState>()(
           profile: null,
           document: null,
           jobs: [],
-          selectedJobs: new Set(),
+          selectedJobIds: [],
           jobQueue: [],
           currentPage: 'landing',
         });
@@ -162,27 +164,34 @@ export const useAppStore = create<AppState>()(
       
       // Job Actions
       setJobs: (jobs: Job[]) => {
-        set({ jobs, selectedJobs: new Set() });
+        set({ jobs, selectedJobIds: [] });
       },
       
       toggleJobSelection: (jobId: string) => {
-        const { selectedJobs } = get();
-        const newSelection = new Set(selectedJobs);
-        if (newSelection.has(jobId)) {
-          newSelection.delete(jobId);
+        const { selectedJobIds } = get();
+        const isSelected = selectedJobIds.includes(jobId);
+        if (isSelected) {
+          set({ selectedJobIds: selectedJobIds.filter(id => id !== jobId) });
         } else {
-          newSelection.add(jobId);
+          set({ selectedJobIds: [...selectedJobIds, jobId] });
         }
-        set({ selectedJobs: newSelection });
       },
       
       selectAllJobs: () => {
         const { jobs } = get();
-        set({ selectedJobs: new Set(jobs.map(j => j.id)) });
+        set({ selectedJobIds: jobs.map(j => j.id) });
       },
       
       clearSelection: () => {
-        set({ selectedJobs: new Set() });
+        set({ selectedJobIds: [] });
+      },
+      
+      isJobSelected: (jobId: string) => {
+        return get().selectedJobIds.includes(jobId);
+      },
+      
+      getSelectedCount: () => {
+        return get().selectedJobIds.length;
       },
       
       addToQueue: (jobs: Job[]) => {
@@ -198,7 +207,7 @@ export const useAppStore = create<AppState>()(
             status: 'pending',
             createdAt: new Date(),
           }));
-        set({ jobQueue: [...jobQueue, ...newItems], selectedJobs: new Set() });
+        set({ jobQueue: [...jobQueue, ...newItems], selectedJobIds: [] });
       },
       
       updateQueueStatus: (queueId: string, status: JobQueue['status'], errorMessage?: string) => {
