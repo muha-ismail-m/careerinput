@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import { useAppStore } from '../store/appStore';
 import { Job } from '../types';
-import { searchJobs, formatPostedTime, formatSalary, JOB_SOURCE_LIST } from '../services/api';
+import { searchJobs, formatPostedTime, formatSalary, JOB_SOURCE_LIST, getLastSearchResults } from '../services/api';
+
+interface SourceStatus {
+  name: string;
+  count: number;
+  success: boolean;
+}
 
 export default function SearchPage() {
   const { user, selectedJobIds, toggleJobSelection, selectAllJobs, clearSelection, addToQueue, setCurrentPage } = useAppStore();
@@ -16,6 +22,8 @@ export default function SearchPage() {
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [sourceStatuses, setSourceStatuses] = useState<SourceStatus[]>([]);
+  const [showSourceDetails, setShowSourceDetails] = useState(false);
 
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -35,6 +43,7 @@ export default function SearchPage() {
         salaryMax: salaryMax ? parseInt(salaryMax) * 1000 : undefined,
       });
       setJobs(results);
+      setSourceStatuses(getLastSearchResults());
       if (results.length > 0) {
         setSelectedJob(results[0]);
       }
@@ -170,7 +179,33 @@ export default function SearchPage() {
           <div className="text-center py-20">
             <div className="text-6xl mb-4">🔍</div>
             <h3 className="text-xl font-semibold text-gray-800 mb-2">No jobs found</h3>
-            <p className="text-gray-600">Try adjusting your search criteria or filters</p>
+            <p className="text-gray-600 mb-6">Try adjusting your search criteria or filters</p>
+            
+            {/* Show source statuses when no jobs found */}
+            {sourceStatuses.length > 0 && (
+              <div className="max-w-md mx-auto">
+                <button
+                  onClick={() => setShowSourceDetails(!showSourceDetails)}
+                  className="text-blue-600 text-sm hover:underline mb-4"
+                >
+                  {showSourceDetails ? 'Hide' : 'Show'} source details
+                </button>
+                {showSourceDetails && (
+                  <div className="bg-white rounded-lg border p-4 text-left">
+                    <h4 className="font-medium text-gray-700 mb-2">Sources Searched:</h4>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      {sourceStatuses.map((s) => (
+                        <div key={s.name} className={`flex items-center gap-2 ${s.success ? 'text-green-600' : 'text-gray-400'}`}>
+                          <span>{s.success ? '✓' : '✗'}</span>
+                          <span>{s.name}</span>
+                          <span className="text-xs">({s.count})</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -191,6 +226,41 @@ export default function SearchPage() {
                 <span className="text-gray-500 text-sm">
                   {jobs.length} jobs found • {selectedJobIds.length} selected
                 </span>
+                
+                {/* Source Status Indicator */}
+                {sourceStatuses.length > 0 && (
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowSourceDetails(!showSourceDetails)}
+                      className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
+                    >
+                      <span className="flex items-center gap-1">
+                        <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                        {sourceStatuses.filter(s => s.success).length}/{sourceStatuses.length} sources
+                      </span>
+                      <svg className={`w-4 h-4 transition-transform ${showSourceDetails ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    
+                    {showSourceDetails && (
+                      <div className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-lg border p-4 z-20 min-w-[280px]">
+                        <h4 className="font-medium text-gray-800 mb-3">Job Sources Status</h4>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          {sourceStatuses.map((s) => (
+                            <div key={s.name} className={`flex items-center justify-between gap-2 px-2 py-1 rounded ${s.success ? 'bg-green-50' : 'bg-gray-50'}`}>
+                              <span className={s.success ? 'text-green-700' : 'text-gray-400'}>{s.name}</span>
+                              <span className={`text-xs font-medium ${s.success ? 'text-green-600' : 'text-gray-400'}`}>{s.count}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-3 pt-3 border-t text-xs text-gray-500">
+                          Green = returned jobs • Gray = no jobs or failed
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               
               {selectedJobIds.length > 0 && (

@@ -1,24 +1,35 @@
 import { useAppStore } from '../store/appStore';
 
+// All job sources - covers ALL industries
 const jobSources = [
-  { name: 'LinkedIn', color: 'bg-blue-100 text-blue-700' },
+  // General Job Boards (ALL industries)
   { name: 'Indeed', color: 'bg-indigo-100 text-indigo-700' },
+  { name: 'LinkedIn', color: 'bg-blue-100 text-blue-700' },
   { name: 'Glassdoor', color: 'bg-green-100 text-green-700' },
   { name: 'ZipRecruiter', color: 'bg-emerald-100 text-emerald-700' },
+  { name: 'Monster', color: 'bg-purple-100 text-purple-700' },
+  { name: 'SimplyHired', color: 'bg-orange-100 text-orange-700' },
+  { name: 'CareerBuilder', color: 'bg-yellow-100 text-yellow-700' },
+  { name: 'Jooble', color: 'bg-cyan-100 text-cyan-700' },
+  { name: 'CareerJet', color: 'bg-pink-100 text-pink-700' },
+  { name: 'Adzuna', color: 'bg-teal-100 text-teal-700' },
+  // Regional
+  { name: 'Reed (UK)', color: 'bg-red-100 text-red-700' },
+  { name: 'USAJobs', color: 'bg-blue-100 text-blue-700' },
+  { name: 'FlexJobs', color: 'bg-green-100 text-green-700' },
+  { name: 'The Muse', color: 'bg-rose-100 text-rose-700' },
+  // Tech & Remote
   { name: 'Remotive', color: 'bg-purple-100 text-purple-700' },
   { name: 'RemoteOK', color: 'bg-orange-100 text-orange-700' },
   { name: 'We Work Remotely', color: 'bg-yellow-100 text-yellow-700' },
-  { name: 'Himalayas', color: 'bg-cyan-100 text-cyan-700' },
-  { name: 'The Muse', color: 'bg-pink-100 text-pink-700' },
-  { name: 'USAJobs', color: 'bg-red-100 text-red-700' },
-  { name: 'Arbeitnow', color: 'bg-teal-100 text-teal-700' },
-  { name: 'GitHub Jobs', color: 'bg-gray-100 text-gray-700' },
-  { name: 'AngelList', color: 'bg-rose-100 text-rose-700' },
   { name: 'Dice', color: 'bg-amber-100 text-amber-700' },
-  { name: 'Landing.jobs', color: 'bg-lime-100 text-lime-700' },
-  { name: 'Dribbble', color: 'bg-fuchsia-100 text-fuchsia-700' },
-  { name: 'Authentic Jobs', color: 'bg-violet-100 text-violet-700' },
+  { name: 'Wellfound', color: 'bg-gray-100 text-gray-700' },
+  { name: 'Himalayas', color: 'bg-cyan-100 text-cyan-700' },
   { name: 'Jobicy', color: 'bg-sky-100 text-sky-700' },
+  { name: 'Arbeitnow', color: 'bg-teal-100 text-teal-700' },
+  // Specialized Industries
+  { name: 'iHire Engineering', color: 'bg-slate-100 text-slate-700' },
+  { name: 'Health eCareers', color: 'bg-emerald-100 text-emerald-700' },
 ];
 
 export default function LandingPage() {
