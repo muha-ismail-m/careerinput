@@ -3,8 +3,10 @@
 export interface User {
   id: string;
   email: string;
-  authToken: string;
-  createdAt: Date;
+  name: string;
+  authToken?: string;
+  photoURL?: string;
+  createdAt?: Date;
 }
 
 export interface Profile {
@@ -60,20 +62,36 @@ export interface Document {
   uploadedAt: Date;
 }
 
+// Job interface - fields may be optional since real APIs have varying data
 export interface Job {
   id: string;
   title: string;
   company: string;
+  companyLogo?: string;
+  companyDescription?: string;
   location: string;
-  salaryMin?: number;
-  salaryMax?: number;
+  locationType: 'Remote' | 'On-site' | 'Hybrid';
+  salary?: { min: number; max: number };
+  salaryPeriod?: 'yearly' | 'hourly';
   description: string;
-  applyUrl: string;
-  jobType: 'full-time' | 'part-time' | 'contract' | 'internship';
-  remote: boolean;
-  postedAt: string;
-  source: string;
-  logoUrl?: string;
+  fullDescription?: string; // Full job description from source
+  responsibilities?: string[];
+  requirements?: string[];
+  benefits?: string[];
+  skills?: string[];
+  experienceLevel?: string;
+  employmentType?: string;
+  applyUrl: string; // REAL URL to apply on the original job site
+  sourceUrl?: string; // URL where the job was found
+  source: string; // Which job board (Remotive, Arbeitnow, etc.)
+  sourceLogoUrl?: string;
+  postedAt: Date | string;
+  expiresAt?: Date;
+  applicantCount?: number;
+  easyApply?: boolean;
+  urgentHiring?: boolean;
+  industry?: string;
+  department?: string;
 }
 
 export interface JobQueue {

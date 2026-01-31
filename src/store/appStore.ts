@@ -1,270 +1,212 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Profile, Document, Job, JobQueue, User } from '@/types';
-import { v4 as uuidv4 } from 'uuid';
+import { User, Profile, Document, Job, JobQueue } from '../types';
+
+type Page = 'landing' | 'search' | 'dashboard' | 'settings' | 'auth';
 
 interface AppState {
+  // Navigation
+  currentPage: Page;
+  setCurrentPage: (page: Page) => void;
+
   // Auth
-  user: User | null;
   isAuthenticated: boolean;
-  
+  user: User | null;
+  login: (user: User) => void;
+  logout: () => void;
+
   // Profile
   profile: Profile | null;
-  document: Document | null;
-  
-  // Jobs
-  jobs: Job[];
-  selectedJobIds: string[];
-  jobQueue: JobQueue[];
-  
-  // UI State
-  currentPage: 'landing' | 'search' | 'dashboard' | 'settings' | 'auth';
-  isLoading: boolean;
-  
-  // Actions
-  login: (email: string, password: string) => void;
-  signup: (email: string, password: string) => void;
-  logout: () => void;
-  
   setProfile: (profile: Profile) => void;
   updateProfile: (updates: Partial<Profile>) => void;
-  setDocument: (document: Document) => void;
-  
-  setJobs: (jobs: Job[]) => void;
+
+  // Documents
+  document: Document | null;
+  setDocument: (doc: Document) => void;
+
+  // Jobs
+  searchResults: Job[];
+  setSearchResults: (jobs: Job[]) => void;
+  selectedJobIds: string[];
   toggleJobSelection: (jobId: string) => void;
-  selectAllJobs: () => void;
+  selectAllJobs: (jobs: Job[]) => void;
   clearSelection: () => void;
   isJobSelected: (jobId: string) => boolean;
   getSelectedCount: () => number;
-  
+
+  // Job Queue
+  jobQueue: JobQueue[];
   addToQueue: (jobs: Job[]) => void;
-  updateQueueStatus: (queueId: string, status: JobQueue['status'], errorMessage?: string) => void;
-  removeFromQueue: (queueId: string) => void;
-  processQueue: () => Promise<void>;
-  
-  setCurrentPage: (page: AppState['currentPage']) => void;
-  setLoading: (loading: boolean) => void;
-  
-  // Check if user needs login for applying
-  requiresAuth: () => boolean;
+  updateQueueItem: (id: string, updates: Partial<JobQueue>) => void;
+  processQueue: () => void;
+  clearQueue: () => void;
+
+  // UI State
+  isLoading: boolean;
+  setIsLoading: (loading: boolean) => void;
+  showAuthModal: boolean;
+  setShowAuthModal: (show: boolean) => void;
 }
+
+const defaultProfile: Profile = {
+  userId: '',
+  firstName: '',
+  lastName: '',
+  phone: '',
+  email: '',
+  address: '',
+  city: '',
+  state: '',
+  zipCode: '',
+  country: '',
+  linkedinUrl: '',
+  portfolioUrl: '',
+  githubUrl: '',
+  yearsOfExperience: '',
+  currentTitle: '',
+  desiredSalary: '',
+  workAuthorization: '',
+  requiresSponsorship: false,
+  genericCoverLetter: '',
+  skills: [],
+  education: [],
+  experience: [],
+};
 
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
-      // Initial State
-      user: null,
-      isAuthenticated: false,
-      profile: null,
-      document: null,
-      jobs: [],
-      selectedJobIds: [],
-      jobQueue: [],
+      // Navigation
       currentPage: 'landing',
-      isLoading: false,
-      
-      // Auth Actions
-      login: (email: string, _password: string) => {
-        const user: User = {
-          id: uuidv4(),
-          email,
-          authToken: uuidv4(),
+      setCurrentPage: (page) => set({ currentPage: page }),
+
+      // Auth
+      isAuthenticated: false,
+      user: null,
+      login: (user) => set({ 
+        isAuthenticated: true, 
+        user,
+        profile: { ...defaultProfile, userId: user.id, email: user.email },
+        showAuthModal: false,
+      }),
+      logout: () => set({ 
+        isAuthenticated: false, 
+        user: null, 
+        profile: null,
+        document: null,
+        jobQueue: [],
+        selectedJobIds: [],
+        currentPage: 'landing',
+      }),
+
+      // Profile
+      profile: null,
+      setProfile: (profile) => set({ profile }),
+      updateProfile: (updates) => set((state) => ({
+        profile: state.profile ? { ...state.profile, ...updates } : null,
+      })),
+
+      // Documents
+      document: null,
+      setDocument: (doc) => set({ document: doc }),
+
+      // Jobs
+      searchResults: [],
+      setSearchResults: (jobs) => set({ searchResults: jobs }),
+      selectedJobIds: [],
+      toggleJobSelection: (jobId) => set((state) => {
+        const isSelected = state.selectedJobIds.includes(jobId);
+        return {
+          selectedJobIds: isSelected
+            ? state.selectedJobIds.filter(id => id !== jobId)
+            : [...state.selectedJobIds, jobId],
+        };
+      }),
+      selectAllJobs: (jobs) => set({ selectedJobIds: jobs.map(j => j.id) }),
+      clearSelection: () => set({ selectedJobIds: [] }),
+      isJobSelected: (jobId) => get().selectedJobIds.includes(jobId),
+      getSelectedCount: () => get().selectedJobIds.length,
+
+      // Job Queue
+      jobQueue: [],
+      addToQueue: (jobs) => set((state) => {
+        const newItems: JobQueue[] = jobs.map((job) => ({
+          id: `queue-${job.id}-${Date.now()}`,
+          userId: state.user?.id || '',
+          jobId: job.id,
+          job,
+          status: 'pending',
           createdAt: new Date(),
-        };
-        // Create empty profile on login
-        const emptyProfile: Profile = {
-          userId: user.id,
-          firstName: '',
-          lastName: '',
-          phone: '',
-          email: email,
-          address: '',
-          city: '',
-          state: '',
-          zipCode: '',
-          country: '',
-          linkedinUrl: '',
-          portfolioUrl: '',
-          githubUrl: '',
-          yearsOfExperience: '',
-          currentTitle: '',
-          desiredSalary: '',
-          workAuthorization: '',
-          requiresSponsorship: false,
-          genericCoverLetter: '',
-          skills: [],
-          education: [],
-          experience: [],
-        };
-        set({ user, isAuthenticated: true, profile: emptyProfile, currentPage: 'search' });
-      },
-      
-      signup: (email: string, _password: string) => {
-        const user: User = {
-          id: uuidv4(),
-          email,
-          authToken: uuidv4(),
-          createdAt: new Date(),
-        };
-        const emptyProfile: Profile = {
-          userId: user.id,
-          firstName: '',
-          lastName: '',
-          phone: '',
-          email: email,
-          address: '',
-          city: '',
-          state: '',
-          zipCode: '',
-          country: '',
-          linkedinUrl: '',
-          portfolioUrl: '',
-          githubUrl: '',
-          yearsOfExperience: '',
-          currentTitle: '',
-          desiredSalary: '',
-          workAuthorization: '',
-          requiresSponsorship: false,
-          genericCoverLetter: '',
-          skills: [],
-          education: [],
-          experience: [],
-        };
-        set({ user, isAuthenticated: true, profile: emptyProfile, currentPage: 'search' });
-      },
-      
-      logout: () => {
-        set({
-          user: null,
-          isAuthenticated: false,
-          profile: null,
-          document: null,
-          jobs: [],
+        }));
+        return { 
+          jobQueue: [...state.jobQueue, ...newItems],
           selectedJobIds: [],
-          jobQueue: [],
-          currentPage: 'landing',
+          currentPage: 'dashboard',
+        };
+      }),
+      updateQueueItem: (id, updates) => set((state) => ({
+        jobQueue: state.jobQueue.map((item) =>
+          item.id === id ? { ...item, ...updates } : item
+        ),
+      })),
+      processQueue: () => {
+        const { jobQueue, updateQueueItem } = get();
+        const pendingItems = jobQueue.filter((item) => item.status === 'pending');
+
+        pendingItems.forEach((item, index) => {
+          // Set to processing
+          setTimeout(() => {
+            updateQueueItem(item.id, { status: 'processing' });
+          }, index * 500);
+
+          // Simulate automation result
+          setTimeout(() => {
+            const rand = Math.random();
+            let status: JobQueue['status'];
+            let errorMessage: string | undefined;
+
+            if (rand < 0.6) {
+              status = 'applied';
+            } else if (rand < 0.8) {
+              status = 'manual_required';
+              errorMessage = 'CAPTCHA detected or login required';
+            } else {
+              status = 'failed';
+              errorMessage = 'Form structure not recognized';
+            }
+
+            updateQueueItem(item.id, {
+              status,
+              errorMessage,
+              appliedAt: status === 'applied' ? new Date() : undefined,
+            });
+          }, index * 500 + 2000 + Math.random() * 2000);
         });
       },
-      
-      // Profile Actions
-      setProfile: (profile: Profile) => {
-        set({ profile });
-      },
-      
-      updateProfile: (updates: Partial<Profile>) => {
-        const { profile } = get();
-        if (profile) {
-          set({ profile: { ...profile, ...updates } });
-        }
-      },
-      
-      setDocument: (document: Document) => {
-        set({ document });
-      },
-      
-      // Job Actions
-      setJobs: (jobs: Job[]) => {
-        set({ jobs, selectedJobIds: [] });
-      },
-      
-      toggleJobSelection: (jobId: string) => {
-        const { selectedJobIds } = get();
-        const isSelected = selectedJobIds.includes(jobId);
-        if (isSelected) {
-          set({ selectedJobIds: selectedJobIds.filter(id => id !== jobId) });
-        } else {
-          set({ selectedJobIds: [...selectedJobIds, jobId] });
-        }
-      },
-      
-      selectAllJobs: () => {
-        const { jobs } = get();
-        set({ selectedJobIds: jobs.map(j => j.id) });
-      },
-      
-      clearSelection: () => {
-        set({ selectedJobIds: [] });
-      },
-      
-      isJobSelected: (jobId: string) => {
-        return get().selectedJobIds.includes(jobId);
-      },
-      
-      getSelectedCount: () => {
-        return get().selectedJobIds.length;
-      },
-      
-      addToQueue: (jobs: Job[]) => {
-        const { user, jobQueue } = get();
-        const existingJobIds = new Set(jobQueue.map(item => item.jobId));
-        const newItems: JobQueue[] = jobs
-          .filter(job => !existingJobIds.has(job.id))
-          .map(job => ({
-            id: uuidv4(),
-            userId: user?.id || '',
-            jobId: job.id,
-            job,
-            status: 'pending',
-            createdAt: new Date(),
-          }));
-        set({ jobQueue: [...jobQueue, ...newItems], selectedJobIds: [] });
-      },
-      
-      updateQueueStatus: (queueId: string, status: JobQueue['status'], errorMessage?: string) => {
-        const { jobQueue } = get();
-        const updated = jobQueue.map(item => 
-          item.id === queueId 
-            ? { ...item, status, errorMessage, appliedAt: status === 'applied' ? new Date() : undefined }
-            : item
-        );
-        set({ jobQueue: updated });
-      },
-      
-      removeFromQueue: (queueId: string) => {
-        const { jobQueue } = get();
-        set({ jobQueue: jobQueue.filter(item => item.id !== queueId) });
-      },
-      
-      processQueue: async () => {
-        const { jobQueue, updateQueueStatus } = get();
-        const pending = jobQueue.filter(item => item.status === 'pending');
-        
-        for (const item of pending) {
-          updateQueueStatus(item.id, 'processing');
-          
-          // Simulate automation processing
-          await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1000));
-          
-          // Simulate success/failure (70% success rate for demo)
-          const success = Math.random() > 0.3;
-          const isManualRequired = !success && Math.random() > 0.5;
-          
-          if (success) {
-            updateQueueStatus(item.id, 'applied');
-          } else if (isManualRequired) {
-            updateQueueStatus(item.id, 'manual_required', 'CAPTCHA or login wall detected');
-          } else {
-            updateQueueStatus(item.id, 'failed', 'Could not find application form');
-          }
-        }
-      },
-      
-      setCurrentPage: (page) => set({ currentPage: page }),
-      setLoading: (loading) => set({ isLoading: loading }),
-      
-      requiresAuth: () => {
-        const { isAuthenticated } = get();
-        return !isAuthenticated;
-      },
+      clearQueue: () => set({ jobQueue: [] }),
+
+      // UI State
+      isLoading: false,
+      setIsLoading: (loading) => set({ isLoading: loading }),
+      showAuthModal: false,
+      setShowAuthModal: (show) => set({ showAuthModal: show }),
     }),
     {
       name: 'career-input-storage',
       partialize: (state) => ({
-        user: state.user,
         isAuthenticated: state.isAuthenticated,
+        user: state.user,
         profile: state.profile,
         document: state.document,
-        jobQueue: state.jobQueue,
+        jobQueue: state.jobQueue.map(item => ({
+          ...item,
+          createdAt: item.createdAt instanceof Date ? item.createdAt.toISOString() : item.createdAt,
+          appliedAt: item.appliedAt instanceof Date ? item.appliedAt.toISOString() : item.appliedAt,
+          job: {
+            ...item.job,
+            postedAt: item.job.postedAt instanceof Date ? item.job.postedAt.toISOString() : item.job.postedAt,
+          }
+        })),
         currentPage: state.currentPage,
       }),
     }

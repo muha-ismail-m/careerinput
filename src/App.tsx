@@ -1,34 +1,41 @@
-import { useAppStore } from '@/store/appStore';
-import { LandingPage } from '@/pages/LandingPage';
-import { AuthPage } from '@/pages/AuthPage';
-import { SearchPage } from '@/pages/SearchPage';
-import { DashboardPage } from '@/pages/DashboardPage';
-import { SettingsPage } from '@/pages/SettingsPage';
+import { useAppStore } from './store/appStore';
+import Navbar from './components/Navbar';
+import LandingPage from './pages/LandingPage';
+import SearchPage from './pages/SearchPage';
+import DashboardPage from './pages/DashboardPage';
+import SettingsPage from './pages/SettingsPage';
+import AuthPage from './pages/AuthPage';
 
-export function App() {
+export default function App() {
   const { currentPage, isAuthenticated } = useAppStore();
-  
-  // Route based on current page
-  switch (currentPage) {
-    case 'landing':
-      return <LandingPage />;
-    case 'auth':
-      return <AuthPage />;
-    case 'search':
-      return <SearchPage />;
-    case 'dashboard':
-      // Redirect to auth if not authenticated
-      if (!isAuthenticated) {
+
+  // Render the current page
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'landing':
+        return <LandingPage />;
+      case 'search':
+        return <SearchPage />;
+      case 'dashboard':
+        return isAuthenticated ? <DashboardPage /> : <AuthPage />;
+      case 'settings':
+        return isAuthenticated ? <SettingsPage /> : <AuthPage />;
+      case 'auth':
         return <AuthPage />;
-      }
-      return <DashboardPage />;
-    case 'settings':
-      // Redirect to auth if not authenticated
-      if (!isAuthenticated) {
-        return <AuthPage />;
-      }
-      return <SettingsPage />;
-    default:
-      return <LandingPage />;
+      default:
+        return <LandingPage />;
+    }
+  };
+
+  // Landing and Auth pages don't show the navbar
+  if (currentPage === 'landing' || currentPage === 'auth') {
+    return renderPage();
   }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      {renderPage()}
+    </div>
+  );
 }

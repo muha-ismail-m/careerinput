@@ -10,7 +10,9 @@
   },
   "dependencies": {
     "@types/uuid": "^10.0.0",
+    "axios": "^1.13.4",
     "clsx": "2.1.1",
+    "firebase": "^12.8.0",
     "lucide-react": "^0.563.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
