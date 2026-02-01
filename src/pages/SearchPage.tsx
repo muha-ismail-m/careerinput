@@ -1,7 +1,102 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useAppStore } from '../store/appStore';
 import { Job } from '../types';
 import { searchJobs, formatPostedTime, formatSalary, JOB_SOURCES, getJobSources } from '../services/api';
+
+// Generate initials from company name
+const getInitials = (name: string): string => {
+  return name
+    .split(/[\s&]+/)
+    .filter(word => word.length > 0)
+    .slice(0, 2)
+    .map(word => word[0].toUpperCase())
+    .join('');
+};
+
+// Generate a consistent color based on company name
+const getColorFromName = (name: string): string => {
+  const colors = [
+    'from-blue-500 to-blue-600',
+    'from-indigo-500 to-indigo-600',
+    'from-purple-500 to-purple-600',
+    'from-pink-500 to-pink-600',
+    'from-red-500 to-red-600',
+    'from-orange-500 to-orange-600',
+    'from-amber-500 to-amber-600',
+    'from-green-500 to-green-600',
+    'from-teal-500 to-teal-600',
+    'from-cyan-500 to-cyan-600',
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+};
+
+// Company Logo component with proper fallback
+const CompanyLogo = ({ 
+  company, 
+  logo, 
+  size = 'md' 
+}: { 
+  company: string; 
+  logo?: string; 
+  size?: 'sm' | 'md' | 'lg';
+}) => {
+  const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  const sizeClasses = {
+    sm: 'w-10 h-10 text-sm',
+    md: 'w-12 h-12 text-base',
+    lg: 'w-16 h-16 text-xl',
+  };
+  
+  const handleError = useCallback(() => {
+    setHasError(true);
+    setIsLoading(false);
+  }, []);
+  
+  const handleLoad = useCallback(() => {
+    setIsLoading(false);
+  }, []);
+  
+  // Check if logo URL is valid
+  const isValidUrl = logo && 
+    (logo.startsWith('http://') || logo.startsWith('https://')) && 
+    !logo.includes('undefined') && 
+    !logo.includes('null');
+  
+  // Show fallback if no logo, invalid URL, or error occurred
+  if (!isValidUrl || hasError) {
+    return (
+      <div 
+        className={`${sizeClasses[size]} rounded-lg bg-gradient-to-br ${getColorFromName(company)} flex items-center justify-center text-white font-bold flex-shrink-0`}
+      >
+        {getInitials(company)}
+      </div>
+    );
+  }
+  
+  return (
+    <div className={`${sizeClasses[size]} rounded-lg bg-gray-50 border flex-shrink-0 relative overflow-hidden`}>
+      {isLoading && (
+        <div className="absolute inset-0 bg-gray-100 animate-pulse" />
+      )}
+      <img
+        src={logo}
+        alt={company}
+        className={`w-full h-full object-contain transition-opacity ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+        onError={handleError}
+        onLoad={handleLoad}
+        loading="lazy"
+        referrerPolicy="no-referrer"
+        crossOrigin="anonymous"
+      />
+    </div>
+  );
+};
 
 interface SourceStatus {
   name: string;
@@ -297,14 +392,7 @@ export default function SearchPage() {
                           className="w-4 h-4 mt-1 text-blue-600 rounded focus:ring-blue-500"
                         />
                       </div>
-                      <img
-                        src={job.companyLogo}
-                        alt={job.company}
-                        className="w-12 h-12 rounded-lg object-contain bg-gray-50 border flex-shrink-0"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(job.company)}&background=6366f1&color=fff`;
-                        }}
-                      />
+                      <CompanyLogo company={job.company} logo={job.companyLogo} size="md" />
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-gray-900 truncate">{job.title}</h3>
                         <p className="text-gray-600 text-sm">{job.company}</p>
@@ -320,7 +408,12 @@ export default function SearchPage() {
                           <span className="text-green-600 font-medium">{formatSalary(job.salary)}</span>
                         </div>
                         <div className="flex flex-wrap items-center gap-2 mt-2">
-                          {job.easyApply && (
+                          {job.isSearchLink && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-700">
+                              🔗 Search Link
+                            </span>
+                          )}
+                          {job.easyApply && !job.isSearchLink && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
                               ⚡ Easy Apply
                             </span>
@@ -345,14 +438,7 @@ export default function SearchPage() {
                 <div className="lg:col-span-3 bg-white rounded-lg border border-gray-200 shadow-sm max-h-[calc(100vh-280px)] overflow-y-auto">
                   <div className="sticky top-0 bg-white border-b p-6 z-10">
                     <div className="flex items-start gap-4">
-                      <img
-                        src={selectedJob.companyLogo}
-                        alt={selectedJob.company}
-                        className="w-16 h-16 rounded-xl object-contain bg-gray-50 border"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedJob.company)}&background=6366f1&color=fff&size=64`;
-                        }}
-                      />
+                      <CompanyLogo company={selectedJob.company} logo={selectedJob.companyLogo} size="lg" />
                       <div className="flex-1">
                         <h2 className="text-2xl font-bold text-gray-900">{selectedJob.title}</h2>
                         <p className="text-lg text-gray-700">{selectedJob.company}</p>
@@ -373,24 +459,35 @@ export default function SearchPage() {
                     </div>
                     
                     <div className="flex flex-wrap items-center gap-3 mt-4">
-                      <button
-                        onClick={() => toggleJobSelection(selectedJob.id)}
-                        className={`px-5 py-2.5 rounded-lg font-semibold transition-all ${
-                          isJobSelected(selectedJob.id)
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                        }`}
-                      >
-                        {isJobSelected(selectedJob.id) ? '✓ Selected' : '+ Add to Apply List'}
-                      </button>
+                      {!selectedJob.isSearchLink && (
+                        <button
+                          onClick={() => toggleJobSelection(selectedJob.id)}
+                          className={`px-5 py-2.5 rounded-lg font-semibold transition-all ${
+                            isJobSelected(selectedJob.id)
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                          }`}
+                        >
+                          {isJobSelected(selectedJob.id) ? '✓ Selected' : '+ Add to Apply List'}
+                        </button>
+                      )}
                       <a
                         href={selectedJob.applyUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-5 py-2.5 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                        className={`px-5 py-2.5 rounded-lg font-semibold transition-colors ${
+                          selectedJob.isSearchLink 
+                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700' 
+                            : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                        }`}
                       >
-                        View on {selectedJob.source} →
+                        {selectedJob.isSearchLink ? `Search on ${selectedJob.source} →` : `View on ${selectedJob.source} →`}
                       </a>
+                      {selectedJob.isSearchLink && (
+                        <span className="text-sm text-amber-600 bg-amber-50 px-3 py-1 rounded-full">
+                          ⚠️ This is a search link - click to view jobs on {selectedJob.source}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -435,11 +532,22 @@ export default function SearchPage() {
                     {/* Job Description */}
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-2">About this Role</h3>
-                      <p className="text-gray-600 leading-relaxed whitespace-pre-line">{selectedJob.description}</p>
+                      <div className="text-gray-600 leading-relaxed whitespace-pre-line">
+                        {selectedJob.fullDescription || selectedJob.description || 'No description available. Click the button below to view full details on the source website.'}
+                      </div>
+                      
+                      {/* If description is short, show a note */}
+                      {(!selectedJob.fullDescription || selectedJob.fullDescription.length < 200) && !selectedJob.isSearchLink && (
+                        <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                          <p className="text-sm text-blue-700">
+                            💡 <strong>Tip:</strong> This listing has limited details. Click "View on {selectedJob.source}" to see the complete job description with all requirements and benefits.
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Responsibilities */}
-                    {selectedJob.responsibilities && selectedJob.responsibilities.length > 0 && (
+                    {selectedJob.responsibilities && selectedJob.responsibilities.length > 0 ? (
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900 mb-3">Responsibilities</h3>
                         <ul className="space-y-2">
@@ -453,10 +561,25 @@ export default function SearchPage() {
                           ))}
                         </ul>
                       </div>
+                    ) : !selectedJob.isSearchLink && (
+                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Responsibilities</h3>
+                        <p className="text-gray-500 text-sm">
+                          Detailed responsibilities are available on the {selectedJob.source} listing. 
+                          <a 
+                            href={selectedJob.applyUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline ml-1"
+                          >
+                            View full details →
+                          </a>
+                        </p>
+                      </div>
                     )}
 
                     {/* Requirements */}
-                    {selectedJob.requirements && selectedJob.requirements.length > 0 && (
+                    {selectedJob.requirements && selectedJob.requirements.length > 0 ? (
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900 mb-3">Requirements</h3>
                         <ul className="space-y-2">
@@ -469,6 +592,21 @@ export default function SearchPage() {
                             </li>
                           ))}
                         </ul>
+                      </div>
+                    ) : !selectedJob.isSearchLink && (
+                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Requirements</h3>
+                        <p className="text-gray-500 text-sm">
+                          Full qualifications and requirements are available on the {selectedJob.source} listing.
+                          <a 
+                            href={selectedJob.applyUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline ml-1"
+                          >
+                            View full details →
+                          </a>
+                        </p>
                       </div>
                     )}
 

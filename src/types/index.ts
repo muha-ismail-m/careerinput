@@ -92,6 +92,7 @@ export interface Job {
   urgentHiring?: boolean;
   industry?: string;
   department?: string;
+  isSearchLink?: boolean; // True if this is a fallback link to search page (not a real job)
 }
 
 export interface JobQueue {
