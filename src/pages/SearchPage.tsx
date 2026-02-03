@@ -105,7 +105,7 @@ interface SourceStatus {
 }
 
 export default function SearchPage() {
-  const { user, selectedJobIds, toggleJobSelection, selectAllJobs, clearSelection, addToQueue, setCurrentPage } = useAppStore();
+  const { selectedJobIds, toggleJobSelection, selectAllJobs, clearSelection, addToQueue, setCurrentPage } = useAppStore();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [location, setLocation] = useState('');
@@ -116,7 +116,6 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const [showAuthModal, setShowAuthModal] = useState(false);
   const [sourceStatuses, setSourceStatuses] = useState<SourceStatus[]>([]);
   const [showSourceDetails, setShowSourceDetails] = useState(false);
 
@@ -150,11 +149,6 @@ export default function SearchPage() {
   };
 
   const handleApplySelected = () => {
-    if (!user) {
-      setShowAuthModal(true);
-      return;
-    }
-    
     const selectedJobs = jobs.filter(job => selectedJobIds.includes(job.id));
     addToQueue(selectedJobs);
     clearSelection();
@@ -710,42 +704,6 @@ export default function SearchPage() {
           </div>
         )}
       </div>
-
-      {/* Auth Modal */}
-      {showAuthModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Sign in to Apply</h3>
-              <p className="text-gray-600 mb-6">
-                Create an account to save your profile and apply to multiple jobs with one click.
-              </p>
-              <div className="space-y-3">
-                <button
-                  onClick={() => {
-                    setShowAuthModal(false);
-                    setCurrentPage('auth');
-                  }}
-                  className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-                >
-                  Sign In / Create Account
-                </button>
-                <button
-                  onClick={() => setShowAuthModal(false)}
-                  className="w-full text-gray-600 py-2 hover:text-gray-800"
-                >
-                  Maybe Later
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

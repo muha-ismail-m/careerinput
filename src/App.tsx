@@ -4,10 +4,9 @@ import LandingPage from './pages/LandingPage';
 import SearchPage from './pages/SearchPage';
 import DashboardPage from './pages/DashboardPage';
 import SettingsPage from './pages/SettingsPage';
-import AuthPage from './pages/AuthPage';
 
 export default function App() {
-  const { currentPage, isAuthenticated } = useAppStore();
+  const { currentPage } = useAppStore();
 
   // Render the current page
   const renderPage = () => {
@@ -17,18 +16,16 @@ export default function App() {
       case 'search':
         return <SearchPage />;
       case 'dashboard':
-        return isAuthenticated ? <DashboardPage /> : <AuthPage />;
+        return <DashboardPage />;
       case 'settings':
-        return isAuthenticated ? <SettingsPage /> : <AuthPage />;
-      case 'auth':
-        return <AuthPage />;
+        return <SettingsPage />;
       default:
         return <LandingPage />;
     }
   };
 
-  // Landing and Auth pages don't show the navbar
-  if (currentPage === 'landing' || currentPage === 'auth') {
+  // Landing page doesn't show the navbar
+  if (currentPage === 'landing') {
     return renderPage();
   }
 

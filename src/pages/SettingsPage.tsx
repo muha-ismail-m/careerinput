@@ -4,7 +4,7 @@ import { useAppStore } from '../store/appStore';
 type Tab = 'personal' | 'professional' | 'experience' | 'education' | 'documents';
 
 export default function SettingsPage() {
-  const { profile, updateProfile, document, setDocument, logout, setCurrentPage } = useAppStore();
+  const { profile, updateProfile, document, setDocument } = useAppStore();
   const [activeTab, setActiveTab] = useState<Tab>('personal');
   const [saved, setSaved] = useState(false);
 
@@ -44,8 +44,8 @@ export default function SettingsPage() {
       <div className="max-w-4xl mx-auto px-4">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Account Settings</h1>
-            <p className="text-gray-600">Manage your profile information for job applications</p>
+            <h1 className="text-3xl font-bold text-gray-900">Profile Settings</h1>
+            <p className="text-gray-600">Manage your information for quick job applications</p>
           </div>
           {saved && (
             <span className="px-4 py-2 bg-green-100 text-green-700 rounded-lg">
@@ -519,18 +519,17 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Logout Section */}
-        <div className="mt-8 p-6 bg-white rounded-xl shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Account</h2>
-          <button
-            onClick={() => {
-              logout();
-              setCurrentPage('landing');
-            }}
-            className="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors"
-          >
-            Sign Out
-          </button>
+        {/* Info box */}
+        <div className="mt-8 p-4 bg-blue-50 border border-blue-100 rounded-xl">
+          <div className="flex gap-3">
+            <span className="text-2xl">💡</span>
+            <div>
+              <h3 className="font-medium text-blue-800">Tip</h3>
+              <p className="text-blue-700 text-sm">
+                Fill out your profile information to make applying to jobs faster. This data is stored locally on your browser and never sent to any server.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

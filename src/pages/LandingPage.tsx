@@ -44,10 +44,10 @@ export default function LandingPage() {
                 Start Searching Jobs
               </button>
               <button
-                onClick={() => setCurrentPage('auth')}
+                onClick={() => setCurrentPage('settings')}
                 className="px-8 py-4 bg-white/20 backdrop-blur text-white font-semibold rounded-lg hover:bg-white/30 transition-colors text-lg border border-white/30"
               >
-                Create Free Account
+                Set Up Your Profile
               </button>
             </div>
           </div>

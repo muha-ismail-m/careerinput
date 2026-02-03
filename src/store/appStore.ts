@@ -1,19 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { User, Profile, Document, Job, JobQueue } from '../types';
+import { Profile, Document, Job, JobQueue } from '../types';
 
-type Page = 'landing' | 'search' | 'dashboard' | 'settings' | 'auth';
+type Page = 'landing' | 'search' | 'dashboard' | 'settings';
 
 interface AppState {
   // Navigation
   currentPage: Page;
   setCurrentPage: (page: Page) => void;
-
-  // Auth
-  isAuthenticated: boolean;
-  user: User | null;
-  login: (user: User) => void;
-  logout: () => void;
 
   // Profile
   profile: Profile | null;
@@ -44,12 +38,10 @@ interface AppState {
   // UI State
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
-  showAuthModal: boolean;
-  setShowAuthModal: (show: boolean) => void;
 }
 
 const defaultProfile: Profile = {
-  userId: '',
+  userId: 'local-user',
   firstName: '',
   lastName: '',
   phone: '',
@@ -80,30 +72,11 @@ export const useAppStore = create<AppState>()(
       currentPage: 'landing',
       setCurrentPage: (page) => set({ currentPage: page }),
 
-      // Auth
-      isAuthenticated: false,
-      user: null,
-      login: (user) => set({ 
-        isAuthenticated: true, 
-        user,
-        profile: { ...defaultProfile, userId: user.id, email: user.email },
-        showAuthModal: false,
-      }),
-      logout: () => set({ 
-        isAuthenticated: false, 
-        user: null, 
-        profile: null,
-        document: null,
-        jobQueue: [],
-        selectedJobIds: [],
-        currentPage: 'landing',
-      }),
-
-      // Profile
-      profile: null,
+      // Profile - initialize with default profile
+      profile: defaultProfile,
       setProfile: (profile) => set({ profile }),
       updateProfile: (updates) => set((state) => ({
-        profile: state.profile ? { ...state.profile, ...updates } : null,
+        profile: state.profile ? { ...state.profile, ...updates } : { ...defaultProfile, ...updates },
       })),
 
       // Documents
@@ -132,7 +105,7 @@ export const useAppStore = create<AppState>()(
       addToQueue: (jobs) => set((state) => {
         const newItems: JobQueue[] = jobs.map((job) => ({
           id: `queue-${job.id}-${Date.now()}`,
-          userId: state.user?.id || '',
+          userId: 'local-user',
           jobId: job.id,
           job,
           status: 'pending',
@@ -188,14 +161,10 @@ export const useAppStore = create<AppState>()(
       // UI State
       isLoading: false,
       setIsLoading: (loading) => set({ isLoading: loading }),
-      showAuthModal: false,
-      setShowAuthModal: (show) => set({ showAuthModal: show }),
     }),
     {
       name: 'career-input-storage',
       partialize: (state) => ({
-        isAuthenticated: state.isAuthenticated,
-        user: state.user,
         profile: state.profile,
         document: state.document,
         jobQueue: state.jobQueue.map(item => ({
