@@ -242,7 +242,7 @@ app.get('/api/jobs/linkedin', async (req, res) => {
               postedAt: dateStr ? new Date(dateStr) : new Date(),
               source: 'LinkedIn',
               sourceUrl: link,
-              applyUrl: link,
+              applyUrl: link, 
               industry: 'Various',
               easyApply: true,
             });
@@ -985,27 +985,27 @@ app.listen(PORT, () => {
   console.log(`
 ╔═══════════════════════════════════════════════════════════════╗
 ║                                                               ║
-║   🚀 CAREER INPUT - Job Proxy Server                         ║
+║   🚀 CAREER INPUT - Job Proxy Server                          ║
 ║                                                               ║
-║   Server running on http://localhost:${PORT}                    ║
+║   Server running on http://localhost:${PORT}                  ║
 ║                                                               ║
 ║   Endpoints:                                                  ║
-║   • GET /api/jobs/search?query=...&location=...              ║
-║   • GET /api/jobs/indeed?query=...                           ║
-║   • GET /api/jobs/linkedin?query=...                         ║
-║   • GET /api/jobs/glassdoor?query=...                        ║
-║   • GET /api/jobs/ziprecruiter?query=...                     ║
-║   • GET /api/jobs/monster?query=...                          ║
-║   • GET /api/jobs/careerbuilder?query=...                    ║
-║   • GET /api/jobs/remotive?query=...                         ║
-║   • GET /api/jobs/remoteok?query=...                         ║
-║   • GET /api/jobs/arbeitnow?query=...                        ║
-║   • GET /api/jobs/himalayas?query=...                        ║
-║   • GET /api/jobs/usajobs?query=...                          ║
-║   • GET /api/jobs/jobicy?query=...                           ║
-║   • GET /api/jobs/themuse?query=...                          ║
-║   • GET /api/jobs/adzuna?query=...                           ║
-║   • GET /api/health                                          ║
+║   • GET /api/jobs/search?query=...&location=...               ║
+║   • GET /api/jobs/indeed?query=...                            ║
+║   • GET /api/jobs/linkedin?query=...                          ║
+║   • GET /api/jobs/glassdoor?query=...                         ║
+║   • GET /api/jobs/ziprecruiter?query=...                      ║
+║   • GET /api/jobs/monster?query=...                           ║
+║   • GET /api/jobs/careerbuilder?query=...                     ║
+║   • GET /api/jobs/remotive?query=...                          ║
+║   • GET /api/jobs/remoteok?query=...                          ║
+║   • GET /api/jobs/arbeitnow?query=...                         ║
+║   • GET /api/jobs/himalayas?query=...                         ║
+║   • GET /api/jobs/usajobs?query=...                           ║
+║   • GET /api/jobs/jobicy?query=...                            ║
+║   • GET /api/jobs/themuse?query=...                           ║
+║   • GET /api/jobs/adzuna?query=...                            ║
+║   • GET /api/health                                           ║
 ║                                                               ║
 ╚═══════════════════════════════════════════════════════════════╝
   `);

@@ -92,7 +92,3 @@ GET /api/health                                # Health check
 - The backend server scrapes job sites, so some sources may occasionally fail due to rate limiting or site changes
 - Job URLs always link to the real job posting on the original site
 - For production, consider adding caching and rate limiting to the backend
-
-## License
-
-MIT
