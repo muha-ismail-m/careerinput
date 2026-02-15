@@ -1,194 +1,136 @@
-Career Input (CareerInput)
+# Career Input (CareerInput)
 
-Career Input is a universal job search + application-tracking prototype that pulls listings from multiple job platforms into one place. Search once, compare results, and manage a single application queue.
+Career Input is a universal job search + application-tracking prototype that pulls listings from multiple job platforms into one place, so you can search once, compare results, and manage a single “application queue”.
 
-Instead of bouncing between tabs (Indeed, LinkedIn, Glassdoor, etc.), Career Input focuses on one workflow:
+Instead of bouncing between tabs (Indeed, LinkedIn, Glassdoor, etc.), Career Input focuses on one workflow:  
+**Search → shortlist → queue → track outcomes → jump to the original posting to apply**.
 
-Search → Shortlist → Queue → Track Outcomes → Apply via Original Posting
+---
 
-What This Repo Contains
+## What this repo contains
 
 This repository is a full-stack project with two main parts:
 
-Frontend
+- **Frontend (React + TypeScript + Tailwind)**: the user interface for searching, filtering, viewing job details, selecting jobs, and managing your application queue.
+- **Optional backend proxy (Node + Express)**: a job-aggregation server that fetches from sources that are difficult to access directly from the browser (mostly due to CORS and scraping limitations).
 
-React + TypeScript + Tailwind CSS
+---
 
-UI for searching, filtering, viewing job details, selecting jobs, and managing the application queue
+## Core features (what users can do)
 
-Optional Backend Proxy
+### 1) Multi-platform job search
+- Search for roles by keyword (and optionally location).
+- Filter results (example: remote-only, salary range).
+- View job cards and a job-details panel to compare listings quickly.
+- Every result routes you back to a **real source link**, so you can confirm the posting and apply on the official page.
 
-Node.js + Express
+### 2) Source transparency (“where did these results come from?”)
+Career Input tracks whether each job source succeeded and how many results it returned. This helps you understand coverage and reliability per search.
 
-Aggregation server that fetches from sources difficult to access directly from the browser (CORS and scraping limitations)
+### 3) Batch selection + application queue
+- Select individual jobs or select all results.
+- Add selected jobs into an **application queue**.
+- Use the dashboard to track queue status (pending, processing, applied, failed, manual required).
 
-Core Features
-1) Multi-Platform Job Search
+**Note:** The “batch apply” concept in this repo is implemented as a **queue + status simulation** (useful for demonstrating product flow). In real-world production, fully automating applications across third-party job sites is usually blocked by logins, CAPTCHAs, and frequently changing form structures—so this project treats automation as a “best effort” concept and falls back to “apply manually” when needed.
 
-Search roles by keyword (and optionally location)
+### 4) Universal profile + resume upload (local)
+A profile/settings area lets you fill out key application info once (contact info, links, experience, education, skills, work authorization, etc.) and upload a resume PDF.
 
-Filter results (e.g., remote-only, salary range)
+This is designed as the foundation for “universal application autofill” behavior.
 
-View job cards and a detailed comparison panel
+---
 
-Each result links back to the original source posting for verification and application
+## How job searching works (two modes)
 
-2) Source Transparency
+### Mode A — With the backend proxy (recommended for full coverage)
+When the backend proxy is running, the frontend automatically detects it and sends a single search request to the backend.
 
-Career Input tracks which job sources succeeded and how many results each returned.
-This helps users understand coverage and reliability per search.
+The backend then:
+- Queries multiple job sources (some via APIs, others via scraping/RSS)
+- Normalizes listings into a consistent `Job` shape
+- Returns one combined list to the frontend
+- Applies filtering + de-duplication so results are cleaner
 
-3) Batch Selection + Application Queue
+Why this exists: many job boards block browser-based fetching or scraping. A server-side proxy avoids most CORS issues and is generally more reliable.
 
-Select individual jobs or all results
+### Mode B — Frontend-only fallback (works, but less reliable)
+If the backend isn’t available, the frontend switches to “direct fetch” mode:
+- It tries public APIs/RSS where possible
+- For blocked sources, it attempts requests through public CORS proxies
+- If a source still fails, the UI may include a “search link” style result so the user can still jump to that platform and continue there
 
-Add selected jobs to an application queue
+This fallback makes the app usable even without the server—but results can vary more depending on rate limits, bot protection, and proxy availability.
 
-Track queue status via dashboard:
+---
 
-Pending
+## Job sources
 
-Processing
+Career Input aggregates from a mix of:
+- public APIs (more stable)
+- RSS feeds (usually stable)
+- scraping (most fragile; can break when site markup changes)
 
-Applied
+Because the repo supports both backend mode and frontend-only mode, the *exact* set of sources depends on how you run the app. The UI is built to show which sources succeeded for a given search.
 
-Manual Required
+---
 
-Failed
+## Application dashboard (what “batch apply” means here)
 
-Note: “Batch apply” is implemented as a queue + status simulation.
-Real-world automated applications are often blocked by logins, CAPTCHAs, and dynamic form structures. The app falls back to “apply manually” when automation isn’t feasible.
+The dashboard is a tracking tool for your queue:
+- “Pending” items are jobs you selected but haven’t processed yet
+- “Processing” simulates an automation attempt
+- Outcomes include:
+  - **Applied** (success path)
+  - **Manual required** (e.g., CAPTCHA/login detected)
+  - **Failed** (e.g., form structure not recognized)
 
-4) Universal Profile + Resume Upload (Local)
+For “manual required,” the UI keeps you moving by sending you to the original job posting so you can apply normally.
 
-Fill application info once (contact details, links, experience, education, skills, work authorization, etc.)
+---
 
-Upload a resume PDF (stored locally in browser)
+## Data storage & privacy notes
 
-Foundation for future “universal autofill” behavior
+- This project is currently **single-user and local-first**.
+- Profile info, resume metadata, and the application queue are stored locally in the browser (so they persist between reloads).
+- Resume upload uses a local browser file URL approach; depending on browser behavior, you may need to re-upload after a refresh/session change.
 
-How Job Searching Works
-Mode A — With Backend Proxy (Recommended)
+If you evolve this project into a real product, you’d typically add:
+- real authentication
+- secure document storage
+- a database-backed application tracker
+- server-side caching / rate limiting for job-source fetches
 
-When the backend is running, the frontend automatically sends a single request to the proxy server.
+---
 
-The backend:
+## Tech stack (high level)
 
-Queries multiple job sources (APIs, RSS, scraping)
+- Frontend: React, TypeScript, Vite, Tailwind CSS
+- State: Zustand (with persistence)
+- Backend (optional): Node.js, Express, Axios, Cheerio (scraping), XML parsing utilities
 
-Normalizes listings into a consistent Job format
+---
 
-Returns a combined result list
+## Repo structure (mental map)
 
-Applies filtering and de-duplication
+- `src/`: frontend app (pages, components, state store, job-source services, types)
+- `server/`: backend job proxy server (source adapters + aggregation endpoint)
 
-Why this exists: Many job boards block browser-based scraping. A server-side proxy avoids most CORS issues and improves reliability.
+---
 
-Mode B — Frontend-Only Fallback
+## Known limitations (honest expectations)
 
-If the backend is unavailable:
+- Scraping-based sources can break or rate-limit without warning.
+- Frontend-only mode depends on public CORS proxies, which can be unstable.
+- “Batch apply” is represented as a product workflow + queue simulation; it does not guarantee real automated submission on third-party job sites.
+- Some fields (salary, job type, experience level) vary by source and may be missing or estimated.
 
-Uses public APIs/RSS when possible
+---
 
-Attempts blocked sources through public CORS proxies
+## Roadmap ideas (practical next steps)
 
-Provides “search link” style results when direct fetch fails
-
-This keeps the app usable without the server, though results may vary due to rate limits or bot protection.
-
-Job Sources
-
-Career Input aggregates listings from:
-
-Public APIs (most stable)
-
-RSS feeds (generally stable)
-
-Scraping adapters (most fragile)
-
-The UI indicates which sources succeeded for each search.
-
-Application Dashboard
-
-The dashboard tracks your queue lifecycle:
-
-Pending – Selected but not processed
-
-Processing – Simulated automation attempt
-
-Applied – Successful path
-
-Manual Required – CAPTCHA/login detected
-
-Failed – Form structure not recognized
-
-For “Manual Required”, the app redirects you to the original posting so you can complete the application normally.
-
-Data Storage & Privacy
-
-Current implementation is single-user and local-first:
-
-Profile info, resume metadata, and queue stored in browser storage
-
-Resume uses local file URL; may require re-upload after refresh/session change
-
-Suggested Production Enhancements
-
-Real authentication
-
-Secure document storage
-
-Database-backed application tracking
-
-Server-side caching and rate limiting for job-source requests
-
-Tech Stack
-
-Frontend
-
-React
-
-TypeScript
-
-Vite
-
-Tailwind CSS
-
-Zustand (state management with persistence)
-
-Backend (Optional)
-
-Node.js
-
-Express
-
-Axios
-
-Cheerio (scraping)
-
-XML parsing utilities
-
-Repo Structure (Mental Map)
-src/       # Frontend app (pages, components, state store, services, types)
-server/    # Backend proxy (source adapters + aggregation endpoint)
-Known Limitations
-
-Scraping-based sources can break or rate-limit without warning
-
-Frontend-only mode depends on public CORS proxies (unstable)
-
-“Batch apply” is a simulated workflow, not guaranteed automation
-
-Some fields (salary, job type, experience level) may be missing or estimated due to source variation
-
-Roadmap Ideas
-
-Backend caching to reduce repeated scraping and speed up searches
-
-Database support for cross-device application tracking
-
-Authentication for a truly universal profile
-
-Improved normalization (job types, seniority, salary units, location parsing)
-
-Export options (CSV/JSON) for application history
+- Add caching on the backend to reduce repeated scraping and speed up searches
+- Add a database so applications are tracked reliably across devices
+- Add auth so the profile becomes truly “universal”
+- Improve normalization (consistent job types, seniority, salary units, location parsing)
+- Add export options (CSV/JSON) for application history
