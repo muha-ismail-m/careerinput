@@ -1,4 +1,4 @@
-# Career Input (CareerInput)
+# Career Input
 
 Career Input is a universal job search + application-tracking prototype that pulls listings from multiple job platforms into one place, so you can search once, compare results, and manage a single “application queue”.
 
